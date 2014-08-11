@@ -1,0 +1,35 @@
+
+The given erlang code is full of problems
+    
+ * Many arguments in each function call
+ * Bad function naming
+ * Too much described in comments
+ * Obvious comments
+ * Misleading comments
+ * Function is doing to much 
+ * Function is too long
+ * Variables are not ignore when they should be
+ * Coherent data is not treated as such
+ * Switching parameter order between functions
+ * Recursive function where not needed
+ * Unnecessarily complex solutions where a simple one would do
+ * Excessive nesting of case
+ * Code duplication
+ * Comments that add no value (TR numbers, etc).
+
+However, you may assume that this module is the ONLY one interfacing the database,
+so you are free to change the underlying implementation in ANY WAY - as long as
+you respect the following
+
+ * The interface functions MUST have the same arity
+   Meaning: you cannot ADD or REMOVE exported functions.
+            you cannot change the arity of the exported functions
+
+ * The behavior MUST stay the same
+   Meaning: you cannot change the behavior of the system.
+
+I have 15 unit tests which MUST pass when you give me the solution.
+If your solution does not pass ALL tests - it cannot be considered for winning.
+
+Refactor it!
+The most elegant and maintainable solution will be discussed and  shown.
