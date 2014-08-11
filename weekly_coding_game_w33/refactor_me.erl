@@ -29,7 +29,7 @@
 %% ----------------------------------------------------------------------------------------------
 register_user(DataBase, FirstName, ChosenPassword, EmailAddress, UserName, WorldRegion) ->
     put(db,DataBase),
-    register_user2(WorldRegion,FirstName,ChosenPassword,UserName,EmailAddress).
+    check_params(WorldRegion,FirstName,ChosenPassword,UserName,EmailAddress).
 
 register_user(1) ->
     ok;
@@ -47,17 +47,15 @@ register_user(_) ->
     {error,bad_region}.
 
 
-register_user2(WorldRegion,FirstName,ChosenPassword,UserName,EmailAddress) when length(FirstName) == 0 ->
+check_params(_, FirstName, _, _, _) when length(FirstName) == 0 ->
     {error, bad_name};
-register_user2(WorldRegion,FirstName,ChosenPassword,UserName,EmailAddress) when length(ChosenPassword) < 6 ->
-    {error, bad_password};
-register_user2(WorldRegion,FirstName,ChosenPassword,UserName,EmailAddress) when length(ChosenPassword) > 20 ->
-    {error, bad_password};
-register_user2(WorldRegion,FirstName,ChosenPassword,UserName,EmailAddress) ->
+check_params(_, _, ChosenPassword, _, _) when length(ChosenPassword) < 6, length(ChosenPassword) > 20 ->
+    {error, bad_password_length};
+check_params(WorldRegion, FirstName, ChosenPassword, UserName, EmailAddress) ->
     NonAlphaNums = [ X || X <- ChosenPassword, lists:member(X,"!@#$%^&*()_-\\|\"\'?/.,<>:;[]{}<>~`")],
     case NonAlphaNums of
         [] ->
-            case [ D || D <- [$0,$1,$2,$3,$4,$5,$6,$7,$8,$9], lists:member(D,ChosenPassword) ] of
+            case [ D || D <- [$0,$1,$2,$3,$4,$5,$6,$7,$8,$9], lists:member(D, ChosenPassword) ] of
                 [] ->
                     {error, bad_password};
                 _ ->
@@ -67,7 +65,7 @@ register_user2(WorldRegion,FirstName,ChosenPassword,UserName,EmailAddress) ->
                             {error,bad_password};
                         _ -> 
                             %% check that the password does not contain usernames
-                            case register_user3(FirstName,WorldRegion, UserName, EmailAddress) of
+                            case username_not_in_passwd(FirstName, WorldRegion, UserName, EmailAddress) of
                                 ok ->
                                     case register_user4(FirstName,WorldRegion, UserName, EmailAddress) of
                                         ok ->
@@ -118,12 +116,12 @@ register_user2(WorldRegion,FirstName,ChosenPassword,UserName,EmailAddress) ->
             {error,bad_password}
     end.
 
-register_user3([], WorldRegion, UserName, Email_address) ->
+username_not_in_passwd([], _) ->
     ok;
-register_user3([C|R], WorldRegion, UserName, Email_address) ->
+username_not_in_passwd([C|R], _) ->
     case lists:member(C,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ") of
         true ->
-            register_user3(R, WorldRegion, UserName, Email_address);
+            username_not_in_passwd(R, _);
         false ->
             {error,bad_name}
     end.
