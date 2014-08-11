@@ -31,8 +31,6 @@ register_user(DataBase, FirstName, ChosenPassword, EmailAddress, UserName, World
     put(db,DataBase),
     register_user2(WorldRegion,FirstName,ChosenPassword,UserName,EmailAddress).
 
-%% written by C. Manson 
-%% 2000-01-01
 register_user(1) ->
     ok;
 register_user(2) ->
@@ -50,13 +48,10 @@ register_user(_) ->
 
 
 register_user2(WorldRegion,FirstName,ChosenPassword,UserName,EmailAddress) when length(FirstName) == 0 ->
-    %% TRHB86833
     {error, bad_name};
 register_user2(WorldRegion,FirstName,ChosenPassword,UserName,EmailAddress) when length(ChosenPassword) < 6 ->
-    %% TRHB88731
     {error, bad_password};
 register_user2(WorldRegion,FirstName,ChosenPassword,UserName,EmailAddress) when length(ChosenPassword) > 20 ->
-    %% TRHB8983
     {error, bad_password};
 register_user2(WorldRegion,FirstName,ChosenPassword,UserName,EmailAddress) ->
     NonAlphaNums = [ X || X <- ChosenPassword, lists:member(X,"!@#$%^&*()_-\\|\"\'?/.,<>:;[]{}<>~`")],
@@ -133,7 +128,6 @@ register_user3([C|R], WorldRegion, UserName, Email_address) ->
             {error,bad_name}
     end.
 
-%% the database must not be empty
 register_user4([],WorldRegion, UserName, Email_address) ->
     {error,bad_name};
 %% todo: 
@@ -146,7 +140,6 @@ register_user4([C|R], WorldRegion, UserName, Email_address) ->
             register_user4(R,  WorldRegion, UserName, Email_address)
     end.
 
-%% check that the entry region also matches 
 get_user_data(DataBase,EmailAddress,UserName) ->
 
     L = [ Entry || Entry <- DataBase,
@@ -160,8 +153,6 @@ get_user_data(DataBase,EmailAddress,UserName) ->
     end.
 
 already_taken_in_region(KeyUserName, KeyEmailAddress) ->
-    %% TR HB98322 
-    %% ----------
     L = [ 1 || {FirstName,
                 ChosenPassword,
                 EmailAddress,
@@ -175,4 +166,3 @@ already_taken_in_region(KeyUserName, KeyEmailAddress) ->
         _ ->
             {error,duplicate}
     end.
-%% ----------
