@@ -27,46 +27,66 @@
 %%           these errors added on 2013-07-04!
 %%          
 %% ----------------------------------------------------------------------------------------------
-register_user(DataBase, FirstName, ChosenPassword, EmailAddress, UserName, WorldRegion) ->
-    put(db,DataBase),
-    check_params(WorldRegion,FirstName,ChosenPassword,UserName,EmailAddress).
 
-register_user(1) ->
-    ok;
-register_user(2) ->
-    ok;
-register_user(3) ->
-    ok;
-register_user(4) ->
-    ok;
-register_user(5) ->
-    ok;
-register_user(6) ->
-    ok;
-register_user(_) ->
+register_user(_, WorldRegion) when WorldRegion < 1, WorldRegion > 6 -> 
     {error,bad_region}.
 
+register_user(DataBase, FirstName, ChosenPassword, EmailAddress, UserName, WorldRegion) -> 
+    check_params(WorldRegion, FirstName, ChosenPassword, UserName, EmailAddress),
+    put(db,DataBase).
 
-check_params(_, FirstName, _, _, _) when length(FirstName) == 0 ->
+check_params(_, FirstName, _, _, _, _) when length(FirstName) == 0 ->
     {error, bad_name};
-check_params(_, _, ChosenPassword, _, _) when length(ChosenPassword) < 6, length(ChosenPassword) > 20 ->
+check_params(_, _, ChosenPassword, _, _, _) when length(ChosenPassword) < 6, length(ChosenPassword) > 20 ->
     {error, bad_password_length};
-check_params(WorldRegion, FirstName, ChosenPassword, UserName, EmailAddress) ->
+check_params(_, _, ChosenPassword, _, _, _) ->
     NonAlphaNums = [ X || X <- ChosenPassword, lists:member(X,"!@#$%^&*()_-\\|\"\'?/.,<>:;[]{}<>~`")],
     case NonAlphaNums of
         [] ->
-            case [ D || D <- [$0,$1,$2,$3,$4,$5,$6,$7,$8,$9], lists:member(D, ChosenPassword) ] of
+            check_pass(ChosenPassword);
+        _ ->
+            {error,bad_password}
+    end.
+check_pass(ChosenPassword) ->
+    case [ D || D <- [$0,$1,$2,$3,$4,$5,$6,$7,$8,$9], lists:member(D, ChosenPassword) ] of
+        [] ->
+            {error, bad_password};
+        _ ->
+            case [ L || L <- "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 
+                        lists:member(L,ChosenPassword) ] of
                 [] ->
-                    {error, bad_password};
-                _ ->
-                    case [ L || L <- "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 
-                                lists:member(L,ChosenPassword) ] of
-                        [] ->
-                            {error,bad_password};
-                        _ -> 
+                    {error,bad_password};
+                _ -> 
+                    username_not_in_passwd(ChosenPassword)
+            end,
+    end.
+
+username_not_in_passwd(ChosenPassword) ->
+    case all(fun (X) -> lists:member(X,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ " end, 
+             ChosenPassword) of
+        true ->
+               %% FIXME 
+        false ->
+            {error,bad_name}
+    end.
+
+register_user4([],WorldRegion, UserName, Email_address) ->
+    {error,bad_name};
+%% todo: 
+%%    ensure that the username also has the same check 2009-03-03
+register_user4([C|R], WorldRegion, UserName, Email_address) ->
+    case lists:member(C,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") of
+        true ->
+            ok;
+        false ->
+            register_user4(R,  WorldRegion, UserName, Email_address)
+    end.
+
+
+
+
+check_username_not_in_pass()
                             %% check that the password does not contain usernames
-                            case username_not_in_passwd(FirstName, WorldRegion, UserName, EmailAddress) of
-                                ok ->
                                     case register_user4(FirstName,WorldRegion, UserName, EmailAddress) of
                                         ok ->
                                             case string:tokens(EmailAddress,"@") of
@@ -112,8 +132,6 @@ check_params(WorldRegion, FirstName, ChosenPassword, UserName, EmailAddress) ->
                 {error,bad_password} -> 
                     {error,bad_password}
             end;
-        _ ->
-            {error,bad_password}
     end.
 
 username_not_in_passwd([], _) ->
@@ -126,17 +144,6 @@ username_not_in_passwd([C|R], _) ->
             {error,bad_name}
     end.
 
-register_user4([],WorldRegion, UserName, Email_address) ->
-    {error,bad_name};
-%% todo: 
-%%    ensure that the username also has the same check 2009-03-03
-register_user4([C|R], WorldRegion, UserName, Email_address) ->
-    case lists:member(C,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") of
-        true ->
-            ok;
-        false ->
-            register_user4(R,  WorldRegion, UserName, Email_address)
-    end.
 
 get_user_data(DataBase,EmailAddress,UserName) ->
 
