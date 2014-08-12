@@ -40,15 +40,10 @@ register_user(_, _, ChosenPassword, _) when length(ChosenPassword) < 6,
     {error, bad_password_length};
 
 register_user(Datebase, _, ChosenPassword, EmailAddress, UserName, _) ->
-    check_passwd(ChosenPassword),
-    check_email(EmailAddress),
-    check_user_not_in_region(UserName, EmailAddress),
+    ok = check_passwd(ChosenPassword),
+    ok = check_email(EmailAddress),
+    ok = check_user_not_in_region(UserName, EmailAddress),
     put(db,DataBase).
-
-register_user(DataBase, FirstName, ChosenPassword, EmailAddress, UserName, WorldRegion) -> 
-    check_params(WorldRegion, FirstName, ChosenPassword, UserName, EmailAddress),
-    put(db,DataBase).
-
 
 %% --------------------------------------------------------------------------------
 %% Helper functions
@@ -79,9 +74,6 @@ check_user_not_in_region(UserName,EmailAddress) ->
                 Err
         end;
 
-
-
-
 already_taken_in_region(KeyUserName, KeyEmailAddress) ->
     L = [ 1 || {FirstName,
                 ChosenPassword,
@@ -96,8 +88,6 @@ already_taken_in_region(KeyUserName, KeyEmailAddress) ->
         _ ->
             {error,duplicate}
     end.
-
-
 
 check_passwd(ChosenPassword) ->
     NonAlphaNums = [ X || X <- ChosenPassword, 
@@ -120,7 +110,7 @@ check_pass(ChosenPassword) ->
                 [] ->
                     {error,bad_password};
                 _ -> 
-                    username_not_in_passwd(ChosenPassword)
+                    ok
             end,
     end.
 
@@ -147,10 +137,6 @@ check_email(EmailAddress) ->
                 [_,_|_] -> ok
             end
     end.
-
-
-
-
 
 register_user4([],WorldRegion, UserName, Email_address) ->
     {error,bad_name};
