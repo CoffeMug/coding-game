@@ -41,17 +41,32 @@ register_user(_, FirstName, _, _, _, _) when length(FirstName) == 0 ->
     {error, bad_name};
 
 register_user(_, _, ChosenPassword, _, _, _) when length(ChosenPassword) < 6, 
-                                            length(ChosenPassword) > 20 ->
+                                                  length(ChosenPassword) > 20 ->
     {error, bad_password_length};
 
 register_user(DataBase, _, ChosenPassword, EmailAddress, UserName, _) ->
-    ok = check_passwd(ChosenPassword),
-    ok = check_email(EmailAddress),
-    ok = check_user_not_in_region(UserName, EmailAddress),
-    put(db,DataBase).
+    case check_params(_, _, ChosenPassword, EmailAddress, UserName, _) of 
+	ok ->
+	    put(db, DataBase);
+	Err -> Err
+    end.
+ 
+check_params(_, FirstName, ChosenPassword, EmailAddress, UserName, WorldRegion)
+case check_passwd(ChosenPassword) of
+    ok -> case username_not_in_passwd(UserName) of 
+	      ok -> case check_email(EmailAddress) of 
+			ok -> case check_user_not_in_region(UserName, EmailAddress) of 
+				  ok -> ok; 
+				  Err -> Err
+			      end;
+			Err -> Err
+		    end;
+	      Err  -> Err
+	  end;
+    Err -> Err
+end.
 
 get_user_data(DataBase,EmailAddress,UserName) ->
-
     L = [ Entry || Entry <- DataBase,
                    UserName == element(4,Entry) andalso 
                    EmailAddress == element(3,Entry) ],
@@ -67,17 +82,17 @@ get_user_data(DataBase,EmailAddress,UserName) ->
 %%
 %% --------------------------------------------------------------------------------
 
-check_user_not_in_region(UserName,EmailAddress) ->
-        case Res2 of
-            ok ->
-                {ok,[{FirstName,
-                      ChosenPassword,
-                      EmailAddress,
-                      UserName,
-                      WorldRegion}|get(db)]};
-            {error,_} = Err ->
-                Err
-        end.
+check_user_not_in_region(UserName, EmailAddress) ->
+    case already_taken_in_region(UserName, EmailAddress) of
+	ok ->
+	    {ok,[{FirstName,
+		  ChosenPassword,
+		  EmailAddress,
+		  UserName,
+		  WorldRegion}|get(db)]};
+	{error,_} = Err ->
+	    Err
+    end.
 
 already_taken_in_region(KeyUserName, KeyEmailAddress) ->
     L = [ 1 || {FirstName,
@@ -85,8 +100,8 @@ already_taken_in_region(KeyUserName, KeyEmailAddress) ->
                 EmailAddress,
                 UserName,
                 WorldRegion} <- get(db),
-               KeyUserName == UserName andalso 
-                   KeyEmailAddress == EmailAddress ],
+                KeyUserName == UserName andalso 
+                KeyEmailAddress == EmailAddress ],
     case L of
         [] ->
             ok;
@@ -101,7 +116,7 @@ check_passwd(ChosenPassword) ->
         [] ->
             check_pass(ChosenPassword);
         _ ->
-            {error,bad_password}
+            {error, bad_password}
     end.
 
 check_pass(ChosenPassword) ->
@@ -111,11 +126,11 @@ check_pass(ChosenPassword) ->
             {error, bad_password};
         _ ->
             case [ L || L <- ?ALPHA, 
-                        lists:member(L,ChosenPassword) ] of
+                        lists:member(L, ChosenPassword) ] of
                 [] ->
-                    {error,bad_password};
+                    {error, bad_password};
                 _ -> 
-                    ok
+                    username_not_in_passwd()
             end
     end.
 
@@ -133,15 +148,8 @@ check_email(EmailAddress) ->
             end
     end.
 
-register_user4(FirstName) ->
-    case lists:all(fun(X) -> lists:member(X,?ALPHA) end, FirstName) of
-        true ->
-            ok;
-        false ->
-            {error,bad_name}
-    end.
 
-username_not_in_passwd(UserName, _) ->
+username_not_in_passwd(FirstName) ->
     case lists:all(fun(X) -> lists:member(X,?ALPHA) end, UserName) of
         true ->
             ok;

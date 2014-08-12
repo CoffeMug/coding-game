@@ -32,4 +32,4 @@ I have 15 unit tests which MUST pass when you give me the solution.
 If your solution does not pass ALL tests - it cannot be considered for winning.
 
 Refactor it!
-The most elegant and maintainable solution will be discussed and  shown.
+The most elegant and maintainable solution will be discussed and shown.
