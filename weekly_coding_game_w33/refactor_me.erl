@@ -64,10 +64,10 @@ register_user(DataBase, FirstName, ChosenPassword, EmailAddress, UserName, World
 %%
 %% --------------------------------------------------------------------------------
 
-get_user_data(DataBase,EmailAddress,UserName) ->
+get_user_data(DataBase, EmailAddress, UserName) ->
     L = [ Entry || Entry <- DataBase,
-                   UserName == element(4,Entry) andalso 
-		       EmailAddress == element(3,Entry) ],
+                   UserName == element(4, Entry) andalso 
+		       EmailAddress == element(3, Entry) ],
     case L of
         [Entry] ->
             [Entry];
@@ -111,7 +111,7 @@ user_name_not_taken_in_region(KeyUserName, KeyEmailAddress) ->
 
 passwd_valid(ChosenPassword) ->
     NonAlphaNums = [ X || X <- ChosenPassword, 
-			  lists:member(X,?NON_ALPHA_CHARS)],
+			  lists:member(X, ?NON_ALPHA_CHARS)],
     case NonAlphaNums of
         [] ->
             check_pass(ChosenPassword);
@@ -137,29 +137,29 @@ check_pass(ChosenPassword) ->
 email_valid(EmailAddress) ->
     case string:tokens(EmailAddress,"@") of
         [EmailAddress] ->
-            {error,bad_email};
+            {error, bad_email};
         [_] ->
-            {error,bad_email};
+            {error, bad_email};
         [_,SecondHalf] ->
             case string:tokens(SecondHalf,".") of
                 [SecondHalf] ->
-                    {error,bad_email};
+                    {error, bad_email};
                 [_,_|_] -> ok
             end
     end.
 
 first_name_not_in_passwd(FirstName) ->
-    case lists:all(fun(X) -> lists:member(X,?ALPHA_CHARS) end, FirstName) of
+    case lists:all(fun(X) -> lists:member(X, ?ALPHA_CHARS) end, FirstName) of
         true ->
             ok;
         false ->
-            {error,bad_name}
+            {error, bad_name}
     end.
 
 db_not_empty(FirstName) ->
-    case lists:any(fun(X) -> lists:member(X,?ALPHA_CHARS) end, FirstName) of
+    case lists:any(fun(X) -> lists:member(X, ?ALPHA_CHARS) end, FirstName) of
         true ->
             ok;
         false ->
-            {error,bad_name}
+            {error, bad_name}
     end.
