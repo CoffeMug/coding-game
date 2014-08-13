@@ -33,13 +33,13 @@
 %%          
 %% --------------------------------------------------------------------------------
 
-register_user(_, _, _, _, _, WorldRegion) when WorldRegion < 1, WorldRegion > 6 -> 
+register_user(_, _, _, _, _, WorldRegion) when WorldRegion < 1; WorldRegion > 6 -> 
     {error,bad_region};
 
 register_user(_, FirstName, _, _, _, _) when length(FirstName) == 0 ->
     {error, bad_name};
 
-register_user(_, _, ChosenPassword, _, _, _) when length(ChosenPassword) < 6, 
+register_user(_, _, ChosenPassword, _, _, _) when length(ChosenPassword) < 6; 
                                                   length(ChosenPassword) > 20 ->
     {error, bad_password_length};
 
