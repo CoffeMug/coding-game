@@ -2,9 +2,8 @@
 -export([register_user/6,
          get_user_data/3]).
 
--define(ALPHA, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ").
-
--define(NON_ALPHA, "!@#$%^&*()_-\\|\"\'?/.,<>:;[]{}<>~`").
+-define(ALPHA_CHARS, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ").
+-define(NON_ALPHA_CHARS, "!@#$%^&*()_-\\|\"\'?/.,<>:;[]{}<>~`").
 
 
 %% --------------------------------------------------------------------------------
@@ -44,32 +43,31 @@ register_user(_, _, ChosenPassword, _, _, _) when length(ChosenPassword) < 6,
                                                   length(ChosenPassword) > 20 ->
     {error, bad_password_length};
 
-register_user(DataBase, _, ChosenPassword, EmailAddress, UserName, _) ->
-    case check_params(_, _, ChosenPassword, EmailAddress, UserName, _) of 
-	ok ->
-	    put(db, DataBase);
-	Err -> Err
-    end.
- 
-check_params(_, FirstName, ChosenPassword, EmailAddress, UserName, WorldRegion)
-case check_passwd(ChosenPassword) of
-    ok -> case username_not_in_passwd(UserName) of 
-	      ok -> case check_email(EmailAddress) of 
-			ok -> case check_user_not_in_region(UserName, EmailAddress) of 
-				  ok -> ok; 
-				  Err -> Err
-			      end;
-			Err -> Err
-		    end;
-	      Err  -> Err
-	  end;
-    Err -> Err
-end.
+register_user(DataBase, FirstName, ChosenPassword, EmailAddress, UserName, WorldRegion) ->
+    put(db, DataBase),
+    case check_params(FirstName, ChosenPassword, EmailAddress) of
+        ok -> case user_name_not_taken_in_region(UserName, EmailAddress) of
+                  ok ->
+                      {ok,[{FirstName,
+                            ChosenPassword,
+                            EmailAddress,
+                            UserName,
+                            WorldRegion}|get(db)]};
+                  {error,_} = Err ->
+                      Err
+              end;
+        Err -> Err
+    end.       
+
+%% --------------------------------------------------------------------------------
+%% Interface get_user_data
+%%
+%% --------------------------------------------------------------------------------
 
 get_user_data(DataBase,EmailAddress,UserName) ->
     L = [ Entry || Entry <- DataBase,
                    UserName == element(4,Entry) andalso 
-                   EmailAddress == element(3,Entry) ],
+		       EmailAddress == element(3,Entry) ],
     case L of
         [Entry] ->
             [Entry];
@@ -81,37 +79,39 @@ get_user_data(DataBase,EmailAddress,UserName) ->
 %% Helper functions
 %%
 %% --------------------------------------------------------------------------------
-
-check_user_not_in_region(UserName, EmailAddress) ->
-    case already_taken_in_region(UserName, EmailAddress) of
-	ok ->
-	    {ok,[{FirstName,
-		  ChosenPassword,
-		  EmailAddress,
-		  UserName,
-		  WorldRegion}|get(db)]};
-	{error,_} = Err ->
-	    Err
+check_params(FirstName, ChosenPassword, EmailAddress) ->
+    case passwd_valid(ChosenPassword) of
+        ok -> case first_name_not_in_passwd(FirstName) of
+                  ok -> case db_not_empty(FirstName) of
+                            ok -> case email_valid(EmailAddress) of 
+                                      ok -> ok;
+                                      Err -> Err
+                                  end;
+                            Err -> Err
+                        end;
+		  Err -> Err
+              end;
+        Err -> Err
     end.
 
-already_taken_in_region(KeyUserName, KeyEmailAddress) ->
-    L = [ 1 || {FirstName,
-                ChosenPassword,
-                EmailAddress,
-                UserName,
-                WorldRegion} <- get(db),
-                KeyUserName == UserName andalso 
-                KeyEmailAddress == EmailAddress ],
+user_name_not_taken_in_region(KeyUserName, KeyEmailAddress) ->
+    L = [ 1 || {_,
+		_,
+		EmailAddress,
+		UserName,
+		_} <- get(db),
+	       KeyUserName == UserName andalso 
+	       KeyEmailAddress == EmailAddress ],
     case L of
-        [] ->
-            ok;
-        _ ->
-            {error,duplicate}
+	[] ->
+	    ok;
+	_ ->
+	    {error,duplicate}
     end.
 
-check_passwd(ChosenPassword) ->
+passwd_valid(ChosenPassword) ->
     NonAlphaNums = [ X || X <- ChosenPassword, 
-                     lists:member(X,?NON_ALPHA)],
+			  lists:member(X,?NON_ALPHA_CHARS)],
     case NonAlphaNums of
         [] ->
             check_pass(ChosenPassword);
@@ -121,20 +121,20 @@ check_passwd(ChosenPassword) ->
 
 check_pass(ChosenPassword) ->
     case [ D || D <- [$0,$1,$2,$3,$4,$5,$6,$7,$8,$9], 
-           lists:member(D, ChosenPassword) ] of
+		lists:member(D, ChosenPassword) ] of
         [] ->
             {error, bad_password};
         _ ->
-            case [ L || L <- ?ALPHA, 
+            case [ L || L <- ?ALPHA_CHARS, 
                         lists:member(L, ChosenPassword) ] of
                 [] ->
                     {error, bad_password};
                 _ -> 
-                    username_not_in_passwd()
+                    ok
             end
     end.
 
-check_email(EmailAddress) ->
+email_valid(EmailAddress) ->
     case string:tokens(EmailAddress,"@") of
         [EmailAddress] ->
             {error,bad_email};
@@ -148,12 +148,18 @@ check_email(EmailAddress) ->
             end
     end.
 
-
-username_not_in_passwd(FirstName) ->
-    case lists:all(fun(X) -> lists:member(X,?ALPHA) end, UserName) of
+first_name_not_in_passwd(FirstName) ->
+    case lists:all(fun(X) -> lists:member(X,?ALPHA_CHARS) end, FirstName) of
         true ->
             ok;
         false ->
             {error,bad_name}
     end.
 
+db_not_empty(FirstName) ->
+    case lists:any(fun(X) -> lists:member(X,?ALPHA_CHARS) end, FirstName) of
+        true ->
+            ok;
+        false ->
+            {error,bad_name}
+    end.
