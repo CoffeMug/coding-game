@@ -94,32 +94,17 @@ check_params(FirstName, ChosenPassword, EmailAddress) ->
         Err -> Err
     end.
 
-user_name_not_taken_in_region(KeyUserName, KeyEmailAddress) ->
-    L = [ 1 || {_,
-		_,
-		EmailAddress,
-		UserName,
-		_} <- get(db),
-	       KeyUserName == UserName andalso 
-	       KeyEmailAddress == EmailAddress ],
-    case L of
-	[] ->
-	    ok;
-	_ ->
-	    {error,duplicate}
-    end.
-
 passwd_valid(ChosenPassword) ->
     NonAlphaNums = [ X || X <- ChosenPassword, 
 			  lists:member(X, ?NON_ALPHA_CHARS)],
     case NonAlphaNums of
         [] ->
-            check_pass(ChosenPassword);
+            further_passwd_check(ChosenPassword);
         _ ->
             {error, bad_password}
     end.
 
-check_pass(ChosenPassword) ->
+further_passwd_check(ChosenPassword) ->
     case [ D || D <- [$0,$1,$2,$3,$4,$5,$6,$7,$8,$9], 
 		lists:member(D, ChosenPassword) ] of
         [] ->
@@ -162,4 +147,19 @@ db_not_empty(FirstName) ->
             ok;
         false ->
             {error, bad_name}
+    end.
+
+user_name_not_taken_in_region(KeyUserName, KeyEmailAddress) ->
+    L = [ 1 || {_,
+		_,
+		EmailAddress,
+		UserName,
+		_} <- get(db),
+	       KeyUserName == UserName andalso 
+	       KeyEmailAddress == EmailAddress ],
+    case L of
+	[] ->
+	    ok;
+	_ ->
+	    {error,duplicate}
     end.
