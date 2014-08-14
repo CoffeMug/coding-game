@@ -130,9 +130,9 @@ email_valid(EmailAddress) ->
             case string:tokens(SecondHalf,".") of
                 [SecondHalf] ->
                     {error, bad_email};
-                [_,_|_] -> ok
-            end;
-        _  -> {error, bad_email}
+                [_,_|_] -> ok;
+                _  -> {error, bad_email}
+            end
     end.
 
 first_name_not_in_passwd(FirstName) ->
