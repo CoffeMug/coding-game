@@ -41,7 +41,7 @@ register_user(_, FirstName, _, _, _, _) when length(FirstName) == 0 ->
 
 register_user(_, _, ChosenPassword, _, _, _) when length(ChosenPassword) < 6; 
                                                   length(ChosenPassword) > 20 ->
-    {error, bad_password_length};
+    {error, bad_password};
 
 register_user(DataBase, FirstName, ChosenPassword, EmailAddress, UserName, WorldRegion) ->
     put(db, DataBase),
@@ -130,7 +130,8 @@ email_valid(EmailAddress) ->
                 [SecondHalf] ->
                     {error, bad_email};
                 [_,_|_] -> ok
-            end
+            end;
+        _  -> {error, bad_email}
     end.
 
 first_name_not_in_passwd(FirstName) ->
