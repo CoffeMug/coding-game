@@ -3,6 +3,7 @@
          get_user_data/3]).
 
 -define(ALPHA_CHARS, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ").
+-define(ALPHA_CHARS_SPACE, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ").
 -define(NON_ALPHA_CHARS, "!@#$%^&*()_-\\|\"\'?/.,<>:;[]{}<>~`").
 
 
@@ -135,7 +136,7 @@ email_valid(EmailAddress) ->
     end.
 
 first_name_not_in_passwd(FirstName) ->
-    case lists:all(fun(X) -> lists:member(X, ?ALPHA_CHARS) end, FirstName) of
+    case lists:all(fun(X) -> lists:member(X, ?ALPHA_CHARS_SPACE) end, FirstName) of
         true ->
             ok;
         false ->
