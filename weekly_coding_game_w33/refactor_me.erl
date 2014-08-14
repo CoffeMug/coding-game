@@ -33,7 +33,6 @@
 %%           these errors added on 2013-07-04!
 %%          
 %% --------------------------------------------------------------------------------
-
 register_user(_, _, _, _, _, WorldRegion) when WorldRegion < 1; WorldRegion > 6 -> 
     {error,bad_region};
 
@@ -64,7 +63,6 @@ register_user(DataBase, FirstName, ChosenPassword, EmailAddress, UserName, World
 %% Interface get_user_data
 %%
 %% --------------------------------------------------------------------------------
-
 get_user_data(DataBase, EmailAddress, UserName) ->
     L = [ Entry || Entry <- DataBase,
                    UserName == element(4, Entry) andalso 
