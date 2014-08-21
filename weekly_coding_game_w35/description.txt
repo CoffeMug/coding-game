@@ -1,0 +1,11 @@
+The following test module tries to test the behavior of a file system watchdog.
+However the test module suffers from several problems
+
+	* The test is too large
+        * The test is testing too much (hard to know why it fails)
+	* Bad naming
+	* Side effects are tested together with pure functions
+	* Unnecessary comments
+	* Duplication
+
+Your task is to refactor the test into something nice and maintainable.
