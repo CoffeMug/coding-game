@@ -14,7 +14,6 @@ refactor_me_test_() ->
 	       fun can_limit_connections_/0
 	       %% fun can_return_history_/0
 	      ]}.
-               
 
 can_start_() ->
     Table = ets:new(tb, [set,public,named_table]),
@@ -25,7 +24,6 @@ can_open_port_() ->
     receive {port, Port} -> ok end,    
     receive {progress,X} -> ok end,
     ets:insert(tb, {port, Port}),
-    ets:insert(tb, {progress, X}),
     ?assertEqual(listening,X),
     io:format(user,"Can open a port - OK~n",[]).
 
@@ -46,19 +44,17 @@ can_see_close_() ->
 
 can_detect_timeout_() ->
     [{port, Port}]=ets:lookup(tb, port),
-    {ok, Sock2} = gen_tcp:connect("localhost",Port,[],500),
+    {ok, Sock} = gen_tcp:connect("localhost",Port,[],500),
     receive {progress, _} -> ok end,
     timer:sleep(700),
     receive {progress, Z} -> ok end,
     ?assertEqual(timeout_on_receive, Z),
-    etc:insert(tb,{sock2, Sock2}),
+    gen_tcp:close(Sock),
     io:format(user,"Can detect timeouts on receive - OK~n",[]).
 
 can_limit_connections_() ->    
-     receive {progress,_} -> ok end,
-     [{sock2, Sock2}] = etc:lookup(tb, sock2),
-     [{port, Port}] = etc:lookup(tb, port),
-     gen_tcp:close(Sock2),
+     [{sock, Sock}] = ets:lookup(tb, sock),
+     [{port, Port}] = ets:lookup(tb, port),
      lists:foreach(
        fun(_) ->
                      {ok, Sock_N} = gen_tcp:connect("localhost",Port,[],500),
@@ -69,11 +65,11 @@ can_limit_connections_() ->
                      ?assertEqual(timeout_on_receive, Z2),
                      gen_tcp:close(Sock_N)
        end, [1,2,3]),
-     receive {progress,Q} -> ok end,
+    receive {progress,Q} -> ok end,
     ?assertEqual(reopening,Q),
-     receive {port,Port2} -> ok end,
+    receive {port,Port2} -> ok end,
     ?assert(Port2 =/= Port),
-     receive {progress,X2} -> ok end,
+    receive {progress,X2} -> ok end,
     ?assertEqual(listening,X2),
     Res = gen_tcp:connect("localhost",Port,[],500),
     ?assertEqual({error,econnrefused},Res),
