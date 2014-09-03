@@ -11,12 +11,12 @@ refactor_me_test_() ->
 	       fun can_recieve_connections_/0,
 	       fun can_see_close_/0,
 	       fun can_detect_timeout_/0,
-	       fun can_limit_connections_/0
-	       %% fun can_return_history_/0
+	       fun can_limit_connections_/0,
+	       fun can_return_history_/0
 	      ]}.
 
 can_start_() ->
-    Table = ets:new(tb, [set,public,named_table]),
+    ets:new(tb, [set,public,named_table]),
     ?assertEqual(ok, refactor_me:start(?Config)),
     io:format(user,"Can start - OK~n",[]).
 
@@ -53,7 +53,6 @@ can_detect_timeout_() ->
     io:format(user,"Can detect timeouts on receive - OK~n",[]).
 
 can_limit_connections_() ->    
-     [{sock, Sock}] = ets:lookup(tb, sock),
      [{port, Port}] = ets:lookup(tb, port),
      lists:foreach(
        fun(_) ->
@@ -68,6 +67,7 @@ can_limit_connections_() ->
     receive {progress,Q} -> ok end,
     ?assertEqual(reopening,Q),
     receive {port,Port2} -> ok end,
+    ets:insert(tb, {port, Port2}),
     ?assert(Port2 =/= Port),
     receive {progress,X2} -> ok end,
     ?assertEqual(listening,X2),
@@ -76,34 +76,12 @@ can_limit_connections_() ->
     io:format(user,"Can close and reopen on max failures reached - OK~n",[]).
 
 can_return_history_() ->
-    refactor_me:start(?Config),
-    receive {port,Port} -> ok end,
-    receive {progress,_} -> ok end,
-    {ok, Sock} = gen_tcp:connect("localhost",Port,[],500),
-    receive {progress,_} -> ok end,
-    gen_tcp:close(Sock),
-    receive {progress,_} -> ok end,
-    {ok, Sock2} = gen_tcp:connect("localhost",Port,[],500),
-    receive {progress,_} -> ok end,
-    timer:sleep(700),
-    receive {progress,_} -> ok end,
-    gen_tcp:close(Sock2),
-    lists:foreach(
-      fun(_) ->
-              {ok, Sock_N} = gen_tcp:connect("localhost",Port,[],500),
-              receive {progress,_} -> ok end,
-              timer:sleep(700),
-              receive {progress,_} -> ok end,
-              gen_tcp:close(Sock_N)
-      end, [1,2,3]),
-    receive {progress,_} -> ok end,
-    receive {port,Port2} -> ok end,
-    receive {progress,_} -> ok end,
-    gen_tcp:connect("localhost",Port,[],500),
-    {ok, Sock3} = gen_tcp:connect("localhost",Port,[{active,false}],500),
-    receive {progress,_} -> ok end,
-    ok = gen_tcp:send(Sock3,"history"),
-    {ok,Data} = gen_tcp:recv(Sock3,0),
+    [{port, Port}] = ets:lookup(tb, port),
+    {ok, Sock} = gen_tcp:connect("localhost",Port,[{active,false}],500),
+    receive {progress,Y} -> ok end,
+    ?assertEqual(connected, Y),
+    ok = gen_tcp:send(Sock,"history"),
+    {ok,Data} = gen_tcp:recv(Sock,0),
     ?assertEqual([history,connected,listening,reopening,timeout_on_receive,
                   connected,timeout_on_receive,connected,timeout_on_receive,
                   connected,timeout_on_receive,connected,closed,connected,
