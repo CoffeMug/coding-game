@@ -78,8 +78,6 @@ can_limit_connections_() ->
 can_return_history_() ->
     [{port, Port}] = ets:lookup(tb, port),
     {ok, Sock} = gen_tcp:connect("localhost",Port,[{active,false}],500),
-    receive {progress,Y} -> ok end,
-    ?assertEqual(connected, Y),
     ok = gen_tcp:send(Sock,"history"),
     {ok,Data} = gen_tcp:recv(Sock,0),
     ?assertEqual([history,connected,listening,reopening,timeout_on_receive,
