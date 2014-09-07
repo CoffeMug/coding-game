@@ -9,7 +9,7 @@ refactor_me_test_() ->
     {inorder, [fun can_start_/0,
 	       fun can_open_port_/0,
 	       fun can_recieve_connections_/0,
-	       fun can_see_close_/0,
+	       fun can_see_connection_closed_/0,
 	       fun can_detect_timeout_/0,
 	       fun can_limit_connections_/0,
 	       fun can_return_history_/0
@@ -35,7 +35,7 @@ can_recieve_connections_()->
     ets:insert(tb, {sock, Sock}),
     io:format(user,"Can receive connections - OK~n",[]).
 
-can_see_close_() ->
+can_see_connection_closed_() ->
     [{sock, Sock}] = ets:lookup(tb, sock),
     gen_tcp:close(Sock),
     receive {progress,A} -> ok end,
@@ -56,13 +56,13 @@ can_limit_connections_() ->
      [{port, Port}] = ets:lookup(tb, port),
      lists:foreach(
        fun(_) ->
-                     {ok, Sock_N} = gen_tcp:connect("localhost",Port,[],500),
-                     receive {progress,D} -> ok end,
-                     ?assertEqual(connected, D),
+                     {ok, Sock} = gen_tcp:connect("localhost", Port, [], 500),
+                     receive {progress, P1} -> ok end,
+                     ?assertEqual(connected, P1),
                      timer:sleep(700),
-                     receive {progress,Z2} -> ok end,    
-                     ?assertEqual(timeout_on_receive, Z2),
-                     gen_tcp:close(Sock_N)
+                     receive {progress, P2} -> ok end,    
+                     ?assertEqual(timeout_on_receive, P2),
+                     gen_tcp:close(Sock)
        end, [1,2,3]),
     receive {progress,Q} -> ok end,
     ?assertEqual(reopening,Q),
