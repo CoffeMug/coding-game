@@ -66,6 +66,11 @@ can_limit_connections_() ->
        end, [1,2,3]),
     receive {progress,Q} -> ok end,
     ?assertEqual(reopening,Q),
+
+
+
+
+
     receive {port,Port2} -> ok end,
     ets:insert(tb, {port, Port2}),
     ?assert(Port2 =/= Port),
