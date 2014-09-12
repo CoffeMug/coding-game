@@ -95,9 +95,3 @@ can_return_history_() ->
                   listening],
                   [ list_to_atom(S) || S <-string:tokens(Data,"\n")]),
     io:format(user,"Can keep track of history and return it - OK~n",[]).
-
-
-
-
-
-
