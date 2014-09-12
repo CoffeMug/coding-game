@@ -12,6 +12,8 @@ refactor_me_test_() ->
 	       fun can_see_connection_closed_/0,
 	       fun can_detect_timeout_/0,
 	       fun can_limit_connections_/0,
+               fun can_open_another_port_/0,
+               fun can_refuse_connecting_same_port_/0,
 	       fun can_return_history_/0
 	      ]}.
 
@@ -66,22 +68,24 @@ can_limit_connections_() ->
        end, [1,2,3]),
     receive {progress,Q} -> ok end,
     ?assertEqual(reopening,Q),
+    io:format(user,"Can limit connections - OK~n",[]).
 
-
-
-
-
+can_open_another_port_() ->
+    [{port, Port}] = ets:lookup(tb, port),
     receive {port,Port2} -> ok end,
-    ets:insert(tb, {port, Port2}),
+    ets:insert(tb, {port2, Port2}),
     ?assert(Port2 =/= Port),
-    receive {progress,X2} -> ok end,
-    ?assertEqual(listening,X2),
+    io:format(user,"Can open another port - OK~n",[]).
+
+can_refuse_connecting_same_port_() ->
+    [{port, Port}] = ets:lookup(tb, port),    
+    receive {progress, _} -> ok end,
     Res = gen_tcp:connect("localhost",Port,[],500),
     ?assertEqual({error,econnrefused},Res),
-    io:format(user,"Can close and reopen on max failures reached - OK~n",[]).
+    io:format(user,"Can refuse connection on the same port - OK~n",[]).
 
 can_return_history_() ->
-    [{port, Port}] = ets:lookup(tb, port),
+    [{port2, Port}] = ets:lookup(tb, port2),
     {ok, Sock} = gen_tcp:connect("localhost",Port,[{active,false}],500),
     ok = gen_tcp:send(Sock,"history"),
     {ok,Data} = gen_tcp:recv(Sock,0),
